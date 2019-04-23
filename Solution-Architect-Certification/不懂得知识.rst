@@ -1,0 +1,11 @@
+在 IAM 中, Role 和 UserGroup 的区别?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Role 是针对 AWS Resource 的
+- UserGroup 是针对 User 的
+
+
+Object Life Cycle
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+当一个 Object 过了一段时间后, 存储类型就从 S3 Standard 降低到 S3 Infrequent Access (IA), 再降低到 S3 One Zone IA, 再降低到 Glacier Vault.
