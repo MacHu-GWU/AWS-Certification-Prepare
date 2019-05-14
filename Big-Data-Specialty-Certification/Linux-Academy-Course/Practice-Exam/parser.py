@@ -1,5 +1,15 @@
 # -*- coding: utf-8 -*-
 
+"""
+This is a script to scrap Linux Academy question pool and it's answers.
+
+How to use:
+
+1. Click Practice Exam in any course in Linux Academy.
+2. Save the HTML of the test result (you can randomly choose answer to get the result quicker)
+3. set ``nth_exam``, it gives you only the NEW questions you never seen before.
+"""
+
 import bs4
 from pathlib_mate import PathCls as Path
 
@@ -63,4 +73,6 @@ def write_new_questions_in_nth_exam_to_file(nth_exam):
     p.write_text(content, encoding="utf-8")
 
 
-write_new_questions_in_nth_exam_to_file(7)
+if __name__ == "__main__":
+    nth_exam = 7
+    write_new_questions_in_nth_exam_to_file(nth_exam)
