@@ -515,27 +515,174 @@ VPC
 1. VPC Basics (Time: 00 Hour 12 Mins 31 Sec)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. contents::
+    :local:
+
+Main components:
+
+- Region
+- CIDR (Classless Inter-Domain Routing)
+- Subnets
+- NAT Instance
+- NAT Gateway
+- Internet Gateway
+- Route Table
+- Security Group
+- Network Access Control Lists
+- Virtual Private Gateway
+- Customer Gateway
+- Dynamic Host Control Protocol (DHCP)
+- IP Address
+
+
+Region
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+- A VPC belongs to a single region
+- you can create multiple VPC in a single region
+
+
+CIDR
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+- Stands for Classless Inter-Domain Routing
+- When you create a VPC, you must specify a range of IPv4 address for the VPC in the form of CIDR block; e.g. 10.0.0.0/16 (primary CIDR block)
+- CIDR is just a method for allocating IP address and IP routine
+- CIDR notation is a compact representation of an IP address and its associated routine prefix. E.g. 10.0.0.0/24 represent the IP address of 10.0.0.0. its subnet mask is 255.255.255.0, which has 24 leading 1 bits, and its associated routine prefix
+- in this example, you will have 2 ** (32 - 24) = 256 address available
+
+
+Subnets
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+- a subnet is just a part of the VPC that also has a CIDR block
+- a VPC can span multiple AZ, a subnet can only be inside a single AZ
+- you need to create one or more subnets inside your VPC to be able to launch the instance
+- typically you will create a private subnets - which contains resources that not exposed to internet or outside of the VPC
+- typically you will also create a public subnets - which contains resource that have access to the internet or reachable from internet
+- the subnets inside a VPC cannot have overlapping IP address
+
+
+NAT Instance (Network Address Translation)
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+- it is a mechanism which contains a physical device acting as a mediator between the instances inside the network and internet.
+- When an instance from inside network requests for information from say a website, the NAT device keeps track of the private IP address of the instance, and makes a request to the website with its own public IP address, giving the impression that it is the NAT who is requesting the website. Once the reply comes back from internet, the NAT checks which instance had made the request, and returns the information to it. So, the private IP address of the instance never gets exposed to the internet. This is called as network address translation.
+- It is just an EC2 instance with NAT capability which stays in a public subnet. All private instances go through NAT if they want to access internet.
+
+
+NAT Gateway
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+- A NAT gateway is an AWS managed NAT device.
+- a Highly available and scalable solution from AWS.
+- Reduces the need for the provisioning of the NAT instance by the customer.
+
+
+Internet Gateway (IGW)
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+- A horizontally scaled, redundant, and highly available VPC component that allows communication between instances in your VPC and the internet.
+- Serves two purposes: to provide a target in your VPC route tables for internet-routable traffic, and to perform network address translation (NAT) for instances that have been assigned public IPv4 addresses.
+
+
+NAT Gateway vs IGW
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+NAT Gateway works at the subnet level whereas IGW works at the VPC level.
+
+
+Route Table
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+- Contains a set of rules, called routes, that are used to determine where network traffic is directed.
+- Each route in a table specifies a destination CIDR and a target
+- Each subnet must be associated with a route table, which controls the routing for the subnet. If you don't explicitly associate a subnet with a particular route table, the subnet is implicitly associated with the main route table.
+- You cannot delete the main route table, but you can replace the main route table with a custom table.
+- Every route table contains a local route for communication within the VPC over IPv4.
+- When you add an Internet gateway, an egress-only Internet gateway, a virtual private gateway, a NAT device, a peering connection, or a VPC endpoint in your VPC, you must update the route table for any subnet that uses these gateways or connections.
+
+
+Security Group
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+- Security groups work at the instance level. Hence they are the first layer of defence for an instance.
+- As seen during EC2 section, security groups define which port and protocols are allowed for incoming and outgoing traffic for the instance.
+- Remember that SGs are stateful. I.e. if a port is open for an inbound traffic, the outbound traffic on the same port is allowed automatically.
+- You can only allow, but can not explicitly deny.
+
+
+Network Access Control Lists (NACL)
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+- Network Access Control Lists work at the subnet level. Hence they are second layer of defense.
+- As opposed to Security Groups, NACLs are stateless. I.e. if a port is open for inbound traffic, the corresponding outbound traffic is not enabled automatically.
+- NACL consists of ordered rules - which contain
+    - Rule number
+    - Protocol
+    - The source of the traffic (CIDR range) and the destination (listening) port or port range [Inbound rules only]
+    - The destination for the traffic (CIDR range) and the destination port or port range [Outbound rules only]
+    - Choice of ALLOW or DENY for the specified traffic
 
 
 2. Setting Up VPC (Time: 00 Hour 17 Mins 16 Sec)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+A typical VPC diagram
+
+.. image:: ./images/typical-vpc-diagram.png
+
+在 VPC 的控制台上最重要的几个:
+
+1. VPC:
+2. Subnet:
+3. Route Tables:
+4. Internet Gateways (IGW): 为 VPC 提供公共英特网的连接服务, VPC 连接外网的流量都要通过 IGW. 如果你的 VPC 要访问外网, 则创建 VPC 之后就要创建一个 IGW.
+5. NAT Gateways: 是位于外网和内网设备之间, 用于为内网设备提供安全的外网访问的设备. 当内网设备需要从外网下载东西时, 则发送请求给 NAT Gateways, 然后 NAT 收到下载数据后, 再转发给内网设备, 使得内网设备的 IP 等信息不会泄露给外网. NAT 的服务对象是 Subnet, 一个 NAT 只能服务于一个 Subnet. NAT Gateways 的实现方式可以使用 AWS 的抽象 NAT Gateways 服务, 也可以用 NAT Instance, 一台专用的 EC2.
+6. Network ACLs: 一系列网络 Inbound, Outbound, Protocol 的规则. 针对 NAT Gateways.
+7. Security Group: 和 Network ACL 类似, 不过是针对 AWS Resource, 比如 EC2, RDS.
 
 
 3. Create VPCFrom Wizard (Time: 00 Hour 10 Mins 36 Sec)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+What is Elastic IP (EIP):
+
+EIP = 弹性IP地址.
+
+事实: 每次启动 EC2 实例时, AWS 自动第为每个实例分配一个 private IP 地址 和 public IP 地址.
+
+假设你有一个 Web APP 运行在这个实例上, 你为这个实例的 public IP 购买了一个域名, 并在 DNS 服务商处注册了. 但是每次关闭再启动实例后, public IP 都会变. 即使你能够动态地将新的 IP 映射到你的域名, 但是将变化传播到整个互联网的时间可能长达 24 小时. 为了解决这个问题, AWS 引入了弹性 IP 的概念. 弹性IP地址是与你的 AWS 账户关联的静态 IP, 除非你显示地释放它, 不然它一直是你的.
 
 
 4. NAT Instance Vs NAT Gateway (Time: 00 Hour 02 Mins 49 Sec)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+NAT Instance vs NAT Gateway
+
+NAT Instance:
+
+- PROS: Customizable, User in control of creating and managing, Multiple instances needed to be highly available and scalable
+- Can become single point of failure
+- Flexibility in the size and type
+- Can be used as a Bastian Server (堡垒服务器)
+- Port Forwarding is supported
+- Supports reassembly of IP fragmented packets for the UDP, TCP, and ICMP protocols.
+
+NAT Gateway:
+
+- PROS: Managed by AWS, implicitly highly available and scalable
+- Least likely to be a single point of failure
+- Uniform offering by AWS
+- Cannot be used as a Bastian Server
+- Port Forwarding is not supported
+- Does not support fragmentation for the TCP and ICMP protocols. Fragmented packets for these protocols will get dropped.
 
 
 5. VPC Peering And VPC Endpoints (Time: 00 Hour 07 Mins 57 Sec)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+- A VPC peering connection is a networking connection between two VPCs that enables you to route traffic between them using private IPv4 addresses or IPv6 addresses.
+- Can be created between your own VPCs, with a VPC in another AWS account, or with a VPC in a different AWS Region.
+- AWS uses the existing infrastructure of a VPC to create a VPC peering connection; it is neither a gateway nor a VPN connection, and does not rely on a separate piece of physical hardware.
+- There is no single point of failure for communication or a bandwidth bottleneck.
+- Helps facilitating the transfer of data. ( ) You cannot edit the VPC peering connection once it is created.
+- You cannot attach or detach VPC peering connection.
 
+应用场景:
+
+1. 你有很多EC2, 需要从公网上下载补丁, 升级软件, 安装依赖包. 但是这些用于生产的服务器所在的 VPC 不能连接公网. 这时就可以用一个单独的, 可连接公网的 VPC 作为中转. 让这个 VPC 从公网上下载依赖, 并测试. 将该 VPC 和生产服务器所在的 VPC peering 起来, 并从已经测试好的服务器上下载安装依赖.
 
 6. VPC Flow Logs (Time: 00 Hour 15 Mins 14 Sec)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -641,6 +788,24 @@ ROUTE53
 1. Basics (Time: 00 Hour 11 Mins 58 Sec)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Important Concept:
+
+- Domain Name: google.com
+- Top Level Domain (TLD): .com / .gov 这类的后缀
+- Subdomain: google.com / maps.google.com / images.google.com 这类的共享一个根域名的域名.
+- Domain Registrar: 一些特定的国际大公司, 有权利帮你注册某些域名.
+- Domain Registry: 域名拥有者, 也就是找 Registrar 花钱注册了该域名的公司或人.
+- Name Servers: 具体的某台服务器, 用于将你的 Domain Name 翻译成 IP 地址
+- Authoritative Name Server: 根服务器, 负责某个区域, 比如北美, 亚洲的域名解析.
+- DNS Resolver: 通常是 ISP (Internet Service Provider) 互联网服务提供商管理的服务器, 位于用户和 Name Server 之间.
+- DNS Query
+- DNS Record: 一系列具体的 domain name 到 IP 的对应关系. 相当于是多个 ``A Record``
+- Time to Live (TTL): DNS Server 上 DNS Query 的缓存持续时间
+- A Record:
+- CNAME (Canonical Name 权威的) Record: 一个 domain / subdomain 到另一个 domain / subdomain 之间的映射
+- Alias Record: AWS Route 53 的自定义 映射
+- Zone Apex: Root Domain, google.com, amazon.com
+- Routing Policy: A setting for domain that determine how Route 53 responds to DNS queries and route the traffic.
 
 
 2. Registering A Domain (Time: 00 Hour 02 Mins 06 Sec)

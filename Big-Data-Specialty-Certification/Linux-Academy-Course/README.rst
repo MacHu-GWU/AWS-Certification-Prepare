@@ -1,0 +1,2 @@
+- Course Homepage: https://linuxacademy.com/amazon-web-services/training/course/name/aws-certified-big-data-specialty-course
+- Course Material: https://linuxacademy.com/cp/modules/view/id/253
